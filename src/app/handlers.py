@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery
 
 import app.keyboards as kb
 from database import get_chapter_file, find_max_value, find_min_value
+from users import add_user_in_db, get_user_chapter, update_user_chapter
 
 MAX_LENGTH = 4096
 current_chapter = 0
@@ -30,6 +31,10 @@ def split_text(text: str, n: int = MAX_LENGTH):
 
 
 @router.message(CommandStart())
+async def cmd_start(message: Message):
+    await message.answer('Hello', reply_markup=kb.main)
+    add_user_in_db(message.from_user.id)
+
 @router.message(F.text == 'Go back')
 async def cmd_start(message: Message):
     await message.answer('Hello', reply_markup=kb.main)
@@ -82,7 +87,6 @@ async def choose_read_chapter(message: Message):
 
 @router.message()
 async def display_chapter(message: Message):
-    global current_chapter 
     ignored = ['Go back', 'popa', 'Read here']
     if message.text in ignored:
         return
@@ -95,7 +99,7 @@ async def display_chapter(message: Message):
         parts = split_text(text)
         for part in parts[:-1]:
             await message.answer(part)
-        current_chapter = int(message.text)
+        update_user_chapter(message.from_user.id, int(message.text))
         await message.answer(parts[-1], reply_markup=await kb.navigation(current_chapter)) 
     except:
         await message.answer('Incorrect chapter! Choose again', reply_markup=await kb.reply_chapters())
