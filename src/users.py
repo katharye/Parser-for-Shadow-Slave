@@ -12,6 +12,7 @@ class Base(DeclarativeBase):
 
 class User(Base):
     __tablename__ = "Users"
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(unique=True)
     chapter: Mapped[Optional[int]]
 
@@ -27,7 +28,7 @@ def init_users_db():
     if not dataDir.exists():
         dataDir.mkdir(parents=True, exist_ok=True)
 
-    db_path = dataDir / "data.db"
+    db_path = dataDir / "users.db"
 
     engine = create_engine(f"sqlite:///{db_path}", echo=False)
 
@@ -36,7 +37,7 @@ def init_users_db():
     return engine
 
 
-def add_user_in_db(user_id: int , chapter: int | None = None) -> bool:
+def add_user_in_db(user_id: int, chapter: int | None = None) -> bool:
     try:
         with Session(engine) as session:
             user_n = User(
@@ -49,7 +50,37 @@ def add_user_in_db(user_id: int , chapter: int | None = None) -> bool:
             stmt = select(User).where(User.id.is_(user_n.id))
 
             for user_n in session.scalars(stmt):
-                print(user_n.user_id)
+                print(f"{user_n.user_id} in {dataDir}")
         return True
     except:
         return False
+    
+
+def update_user_chapter(user_id: int, chapter: int) -> bool:
+    try:
+        with Session(engine) as session:
+            stmt = select(User).where(User.user_id == user_id)
+            user = session.scalars(stmt).first()
+
+            if user:
+                user.chapter = chapter
+            else:
+                user = User(
+                    user_id=user_id,
+                    chapter=chapter
+                )
+                session.add(user)
+            
+            session.commit()
+            print(f"{user.user_id} : {user.chapter}")
+        return True
+    except:
+        return False
+    
+def get_user_chapter(user_id: int) -> int:
+    with Session(engine) as session:
+        stmt = select(User).where(User.user_id == user_id)
+        user_chapter = session.scalars(stmt).first()
+        if user_chapter:
+            return user_chapter.chapter
+        return None
