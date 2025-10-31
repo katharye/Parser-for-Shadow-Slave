@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
@@ -5,6 +6,7 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy import func
 
 class Base(DeclarativeBase):
     pass
@@ -17,7 +19,14 @@ class Chapter(Base):
     link: Mapped[Optional[str]]
     file_path: Mapped[Optional[str]]
 
-engine = create_engine("sqlite:///data/testdb.db", echo=False)
+baseDir = Path(__file__).resolve().parents[1]
+dataDir = baseDir / "data"
+if not dataDir.exists():
+    dataDir.mkdir(parents=True, exist_ok=True)
+
+db_path = dataDir / "data.db"
+
+engine = create_engine(f"sqlite:///{db_path}", echo=False)
 
 Base.metadata.create_all(engine)
 
@@ -66,3 +75,21 @@ def is_chapter_in_db(chapter_id: str | int) -> bool:
         if chapters.all():
             return True
         else: return False
+
+def find_min_value() -> int:
+    with Session(engine) as session:
+        min_value = session.scalar(select(func.min(Chapter.chapter_id)))
+        return min_value
+    
+def find_max_value() -> int:
+    with Session(engine) as session:
+        max_value = session.scalar(select(func.max(Chapter.chapter_id)))
+        return max_value
+
+def get_chapter_file(chapter_id: str | int) -> str:
+    with Session(engine) as session:
+        stmt = select(Chapter).where(Chapter.chapter_id == int(chapter_id))
+        chapter = session.scalars(stmt).first()
+        if chapter:
+            return f"{chapter.file_path}/{chapter_id}.txt"
+        return None
