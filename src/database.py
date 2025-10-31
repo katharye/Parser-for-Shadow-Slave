@@ -19,16 +19,25 @@ class Chapter(Base):
     link: Mapped[Optional[str]]
     file_path: Mapped[Optional[str]]
 
+engine = None
+
 baseDir = Path(__file__).resolve().parents[1]
 dataDir = baseDir / "data"
-if not dataDir.exists():
-    dataDir.mkdir(parents=True, exist_ok=True)
 
-db_path = dataDir / "data.db"
+def init_db():
+    global dataDir
+    global engine
 
-engine = create_engine(f"sqlite:///{db_path}", echo=False)
+    if not dataDir.exists():
+        dataDir.mkdir(parents=True, exist_ok=True)
 
-Base.metadata.create_all(engine)
+    db_path = dataDir / "data.db"
+
+    engine = create_engine(f"sqlite:///{db_path}", echo=False)
+
+    Base.metadata.create_all(engine)
+
+    return engine
 
 def add_chapter_in_db(chapter_id: int | str, title: str, link: str | None = None, file_path: str | None = None) -> bool:
     try:

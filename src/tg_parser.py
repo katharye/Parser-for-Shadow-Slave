@@ -1,12 +1,14 @@
 import os
 import re 
 import random 
+import shutil
 
 import asyncio
 from dotenv import load_dotenv
 from telethon import TelegramClient
 
 import tgf_parser
+from database import dataDir
 
 PATTERN = r"https://telegra.ph/Glava-\d+-.*-\d{2}-\d{2}"
 TARGET = "Теневой Раб | Онгоинг"
@@ -20,7 +22,8 @@ if not api_id or not api_hash:
 
 api_id = int(api_id)
 
-async def main():
+async def pars_all():
+    tgf_parser.create_chapterDir()
     async with TelegramClient("parser", api_id, api_hash) as client:
 
         dialogs = await client.get_dialogs()
@@ -46,5 +49,9 @@ async def main():
                         await asyncio.sleep(random.uniform(1.0, 3.0))
                 break
 
+async def overwrite_all():
+    if dataDir.exists():
+        shutil.rmtree(dataDir)
+    await pars_all()
 
-asyncio.run(main())
+asyncio.run(overwrite_all())

@@ -7,14 +7,22 @@ from docx import Document
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from database import is_chapter_in_db, add_chapter_in_db
+from database import is_chapter_in_db, add_chapter_in_db, init_db
 
 SKIP_LINES = {"Предыдущая глава", "Следующая глава"}
 
-baseDir = Path(__file__).resolve().parents[1]
-chapterDir = baseDir / "data" / "chapters"
-if not chapterDir.exists():
-    chapterDir.mkdir(parents=True, exist_ok=True)
+chapterDir = None
+
+def create_chapterDir():
+    global chapterDir
+
+    baseDir = Path(__file__).resolve().parents[1]
+    chapterDir = baseDir / "data" / "chapters"
+    if not chapterDir.exists():
+        chapterDir.mkdir(parents=True, exist_ok=True)
+
+    init_db()
+
 
 def write_to_txt_file(txt_path: Path, chapter_title: str, chapter_text: Iterable[Tag]) -> None:
     if not chapter_text:
