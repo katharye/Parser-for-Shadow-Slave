@@ -53,8 +53,8 @@ async def popa_photo(message: Message):
 @router.callback_query(F.data == 'prev')
 async def previous_chapter(callback: CallbackQuery):
     await callback.answer('')
-    global current_chapter 
 
+    current_chapter = get_user_chapter(callback.from_user.id)
     chapter_path = get_chapter_file(current_chapter - 1)
     with open(chapter_path, "r", encoding="utf-8") as f:
         text = f.read()
@@ -62,14 +62,16 @@ async def previous_chapter(callback: CallbackQuery):
     parts = split_text(text)
     for part in parts[:-1]:
         await callback.message.answer(part)
+
     current_chapter -= 1
+    update_user_chapter(callback.from_user.id, current_chapter)
     await callback.message.answer(parts[-1], reply_markup=await kb.navigation(current_chapter))
 
 @router.callback_query(F.data == 'next')
 async def next_chapter(callback: CallbackQuery):
     await callback.answer('')
-    global current_chapter 
 
+    current_chapter = get_user_chapter(callback.from_user.id)
     chapter_path = get_chapter_file(current_chapter + 1)
     with open(chapter_path, "r", encoding="utf-8") as f:
         text = f.read()
@@ -77,7 +79,9 @@ async def next_chapter(callback: CallbackQuery):
     parts = split_text(text)
     for part in parts[:-1]:
         await callback.message.answer(part)
+
     current_chapter += 1
+    update_user_chapter(callback.from_user.id, current_chapter)
     await callback.message.answer(parts[-1], reply_markup=await kb.navigation(current_chapter))
     
 
@@ -100,6 +104,7 @@ async def display_chapter(message: Message):
         for part in parts[:-1]:
             await message.answer(part)
         update_user_chapter(message.from_user.id, int(message.text))
+        current_chapter = get_user_chapter(message.from_user.id)
         await message.answer(parts[-1], reply_markup=await kb.navigation(current_chapter)) 
     except:
         await message.answer('Incorrect chapter! Choose again', reply_markup=await kb.reply_chapters())
