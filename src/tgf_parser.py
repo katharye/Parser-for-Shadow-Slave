@@ -71,13 +71,15 @@ def parsChapter(url: str) -> bool:
 
         chapter_title = content.find("h1").text
         chapter_text = content.find_all("p")
-        chapter_number =  re.sub(':.*', '', chapter_title)[6:]
+        
+        match = re.search(r'(\d+):', chapter_title)
+        chapter_number = int(match.group(1))
 
         if is_chapter_in_db(chapter_number): 
             print(f'Chapter "{chapter_title}" skipped: already exists!')
             return True
 
-        path = chapterDir / chapter_number
+        path = chapterDir / str(chapter_number)
         if not path.exists():
             path.mkdir(parents=True, exist_ok=True)
 
