@@ -50,8 +50,36 @@ async def pars_all():
                 break
 
 async def overwrite_all():
-    if dataDir.exists():
-        shutil.rmtree(dataDir)
+    chapterDir = dataDir / 'chapters'
+    if chapterDir.exists():
+        shutil.rmtree(chapterDir)
+
+    database_path = dataDir / 'data.db'
+    if database_path.exists():
+        os.remove(database_path)
+    
     await pars_all()
 
-asyncio.run(overwrite_all())
+    print("popa")
+
+async def update():
+    tgf_parser.create_chapterDir()
+    async with TelegramClient("parser", api_id, api_hash) as client:
+
+        dialogs = await client.get_dialogs()
+
+        for dialog in dialogs:
+            if dialog.title == TARGET:
+                messages = client.iter_messages(dialog, limit=10)
+
+                async for message in messages: 
+                    if message.text is None:
+                        continue
+
+                    match = re.search(PATTERN, message.text)
+                    if match is None:
+                        continue
+
+                    await asyncio.to_thread(tgf_parser.parsChapter, match.group())
+                    await asyncio.sleep(random.uniform(0.3, 0.8))
+                break
