@@ -15,6 +15,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(unique=True)
     chapter: Mapped[Optional[int]]
+    notifications: Mapped[Optional[bool]]
 
 engine = None
 
@@ -37,12 +38,13 @@ def init_users_db():
     return engine
 
 
-def add_user_in_db(user_id: int, chapter: int | None = None) -> bool:
+def add_user_in_db(user_id: int, chapter: int | None = None, notifications: bool = False) -> bool:
     try:
         with Session(engine) as session:
             user_n = User(
                 user_id=user_id,
-                chapter=chapter
+                chapter=chapter,
+                notifications=notifications
             )
             session.add(user_n)
             session.commit()
@@ -72,7 +74,27 @@ def update_user_chapter(user_id: int, chapter: int) -> bool:
                 session.add(user)
             
             session.commit()
-            print(f"{user.user_id} : {user.chapter}")
+        return True
+    except:
+        return False
+    
+def update_user_notifications_subscription(user_id: int, notifications: bool) -> bool:
+    try:
+        with Session(engine) as session:
+            stmt = select(User).where(User.user_id == user_id)
+            user = session.scalars(stmt).first()
+
+            if user:
+                user.notificaions = notifications
+            else:
+                user = User(
+                    user_id=user_id,
+                    chapter=None,
+                    notifications=notifications
+                )
+                session.add(user)
+            
+            session.commit()
         return True
     except:
         return False
@@ -83,4 +105,22 @@ def get_user_chapter(user_id: int) -> int:
         user_chapter = session.scalars(stmt).first()
         if user_chapter:
             return user_chapter.chapter
+        return None
+
+def get_user_notifications_subscription(user_id: int) -> bool:
+    try:
+        with Session(engine) as session:
+            stmt = select(User).where(User.user_id == user_id)
+            notifications_subscription = session.scalars(stmt).first()
+            return notifications_subscription.notifications
+    except:
+        return False
+
+def get_all_user_ids() -> list[int]:
+    try:
+        with Session(engine) as session:
+            stmt = select(User.user_id)
+            result = session.execute(stmt).scalars().all()
+            return result
+    except:
         return None
