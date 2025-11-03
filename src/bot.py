@@ -4,21 +4,12 @@ from database import init_db
 init_users_db()
 init_db()
 
-
-import os
 import logging 
 import asyncio
 
-from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher
+from loader import dp, bot
 
 from app.handlers import router
-
-load_dotenv()
-bot_token = os.getenv("BOT_TOKEN")
-
-bot = Bot(token=bot_token)
-dp = Dispatcher()
 
 async def main():
     dp.include_router(router)
