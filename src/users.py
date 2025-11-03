@@ -85,7 +85,7 @@ def update_user_notifications_subscription(user_id: int, notifications: bool) ->
             user = session.scalars(stmt).first()
 
             if user:
-                user.notificaions = notifications
+                user.notifications = notifications
             else:
                 user = User(
                     user_id=user_id,
