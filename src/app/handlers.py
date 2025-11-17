@@ -5,12 +5,14 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import FSInputFile
 from aiogram.types.reply_keyboard_remove import ReplyKeyboardRemove
 from aiogram.exceptions import TelegramRetryAfter, TelegramForbiddenError
 
 import app.keyboards as kb
+from app.merging import merge_files
 import users as usr
-from database import get_chapter_file, find_max_value
+from database import get_chapter_file, find_max_value, dataDir
 from tg_parser import overwrite_all, update
 from loader import bot
 
@@ -68,24 +70,17 @@ async def send_to_all_subscribers(text: str):
             except Exception as e:
                 print(f"ERROR WITH USER <{user}: {e}>")
 
-# async def merge_txt_files(first: int, second: int) -> bool:
-#     with 
-#     for chapter in range(first, second):
-
 
 #----------------------------#
 @router.message(CommandStart())
 async def cmd_start(message: Message):
     user_id = message.from_user.id
-    await message.answer('Hello', reply_markup=await kb.main(user_id))
+    await message.answer_photo(photo='https://i.ibb.co/m5hnJW1V/20251116-232001-264.jpg',
+                               caption='Welcome! Choose one of this options:', reply_markup=await kb.main(user_id))
     usr.add_user_in_db(user_id)
 #----------------------------#
 
 #----------------------------#
-@router.message(Command('help'))
-async def get_help(message: Message):
-    await message.answer('Help', reply_markup=kb.navigation)
-
 @router.message(Command('popa'))
 async def popa_photo(message: Message):
     await message.answer_photo(photo='https://img.freepik.com/free-photo/beautiful-shot-white-british-shorthair-kitten_181624-57681.jpg',
@@ -185,14 +180,14 @@ async def finish_choosing(message: Message, state: FSMContext):
 #----------------------------#
     
 #----------------------------#
-# @router.message(F.text == 'Download chapters')
+@router.message(F.text == 'Download chapters')
 async def download_chapters(message: Message, state: FSMContext):
     await message.delete()
     await state.set_state(downloadChapters.first)
     await kb.find_extreme_chapters()
     await message.answer(text=f'Choose first chapter between {kb.min_chapter} and {kb.max_chapter}', reply_markup=kb.go_back)
 
-# @router.message(downloadChapters.first)
+@router.message(downloadChapters.first)
 async def first(message: Message, state: FSMContext):
     user_input = message.text.strip()
     if user_input == 'Go back':
@@ -215,7 +210,7 @@ async def first(message: Message, state: FSMContext):
     await kb.find_extreme_chapters()
     await message.answer(text=f'Choose second chapter between {kb.min_chapter} and {kb.max_chapter}', reply_markup=kb.go_back)
 
-# @router.message(downloadChapters.second)
+@router.message(downloadChapters.second)
 async def second(message: Message, state: FSMContext):
     user_input = message.text.strip()
     
@@ -241,7 +236,10 @@ async def second(message: Message, state: FSMContext):
     if data['first'] > data['second']:
         data['first'], data['second'] = data['second'], data['first']
 
-
+    path = FSInputFile(await merge_files(data['first'], data['second']))
+    
+    
+    await message.answer_document(document=path, caption='Here is your file:', reply_markup=await kb.main(message.from_user.id))
 
     await state.clear()
 #----------------------------#

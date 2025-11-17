@@ -14,7 +14,7 @@ async def find_extreme_chapters():
 async def main(user_id):
     keyboard = ReplyKeyboardBuilder()
 
-    # keyboard.add(KeyboardButton(text='Download chapters?'))
+    keyboard.add(KeyboardButton(text='Download chapters'))
     keyboard.add(KeyboardButton(text='Read here'))
 
     if get_user_notifications_subscription(user_id):
@@ -29,7 +29,7 @@ async def main(user_id):
     
     return keyboard.adjust(2, 1, 2).as_markup(
         resize_keyboard=True,
-        input_field_placeholder='Добро пожаловать в Мимика! Выберите действие:'
+        input_field_placeholder='Welcome! Choose option:'
     )
 
 async def navigation(current_chapter):
