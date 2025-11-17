@@ -11,7 +11,8 @@ from database import is_chapter_in_db, add_chapter_in_db, init_db
 
 SKIP_LINES = {"Предыдущая глава", "Следующая глава"}
 
-chapterDir = None
+baseDir = Path(__file__).resolve().parents[1]
+chapterDir = baseDir / "data" / "chapters"
 
 def create_chapterDir():
     global chapterDir
